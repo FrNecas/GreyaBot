@@ -55,7 +55,7 @@ func HandleVerification(s *discordgo.Session, data *discordgo.MessageReactionAdd
 	}
 	if data.Emoji.Name == config.Config.VerifyEmote {
 		fmt.Printf("Adding verify role to %s\n", data.UserID)
-		err := s.GuildMemberRoleAdd(config.Config.GuildID, data.UserID, config.Config.VerifyRoleID)
+		err := s.GuildMemberRoleAdd(data.GuildID, data.UserID, config.Config.VerifyRoleID)
 		if err != nil {
 			fmt.Println("Error adding verify role,", err)
 		}

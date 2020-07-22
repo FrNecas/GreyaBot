@@ -14,8 +14,6 @@ var Config config
 type config struct {
 	Token string `json:"token"`
 
-	GuildID string `json:"guild_id"`
-
 	RulesChannelID     string `json:"rules_channel_id"`
 	GreetingsChannelID string `json:"greetings_channel_id"`
 
