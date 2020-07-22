@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"strings"
 	"syscall"
 )
 
@@ -16,6 +17,8 @@ func addHandlers(s *discordgo.Session) {
 		discordgo.IntentsGuildMessageReactions | discordgo.IntentsGuildMessages)
 	s.AddHandler(HandleVerification)
 	s.AddHandler(HandleNewMember)
+	s.AddHandler(BlockUnwantedNewMessages)
+	s.AddHandler(BlockUnwantedUpdatedMessages)
 }
 
 func RunBot() {
@@ -78,5 +81,48 @@ func HandleNewMember(s *discordgo.Session, data *discordgo.GuildMemberAdd) {
 	_, err := s.ChannelMessageSend(config.Config.GreetingsChannelID, greeting)
 	if err != nil {
 		fmt.Println("Error sending a welcome message,", err)
+	}
+}
+
+func isMaliciousMessage(s string) bool {
+	s = strings.ToLower(s)
+	for _, regex := range config.Config.BlockedRegexExps {
+		if regex.MatchString(s) {
+			return true
+		}
+	}
+	return false
+}
+
+func sendAuthorWarning(s *discordgo.Session, userID string) {
+	channel, err := s.UserChannelCreate(userID)
+	if err != nil {
+		fmt.Println("Failed to create user channel while sending a warning,", err)
+	}
+	_, errSend := s.ChannelMessageSend(channel.ID, config.Config.WarningMessage)
+	if errSend != nil {
+		fmt.Printf("Error sending a warning message to %s, %s\n", userID, errSend)
+	}
+}
+
+func BlockUnwantedNewMessages(s *discordgo.Session, data *discordgo.MessageCreate) {
+	if isMaliciousMessage(data.Content) {
+		fmt.Println("Removing malicious message with this content,", data.Content)
+		err := s.ChannelMessageDelete(data.ChannelID, data.ID)
+		if err != nil {
+			fmt.Println("Failed to delete a malicious message,", err)
+		}
+		sendAuthorWarning(s, data.Author.ID)
+	}
+}
+
+func BlockUnwantedUpdatedMessages(s *discordgo.Session, data *discordgo.MessageUpdate) {
+	if isMaliciousMessage(data.Content) {
+		fmt.Println("Removing malicious message with the following content,", data.Content)
+		err := s.ChannelMessageDelete(data.ChannelID, data.ID)
+		if err != nil {
+			fmt.Println("Failed to delete a malicious message,", err)
+		}
+		sendAuthorWarning(s, data.Author.ID)
 	}
 }
