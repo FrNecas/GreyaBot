@@ -18,6 +18,13 @@ type config struct {
 	VerifyRoleID string `json:"verify_role_id"`
 
 	RulesMessageID string `json:"rules_message_id"`
+
+	// The greetings message may contain the following macros:
+	//    $user which will be replaced with the new user tag
+	//    $channel(id) which will be replaced with a link to channel with the id
+	GreetingMessage string `json:"greeting_message"`
+
+	VerifyEmote string `json:"verify_emote"`
 }
 
 func ReadConfig() error {
