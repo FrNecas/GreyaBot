@@ -1,0 +1,20 @@
+{
+  "token": "",
+
+  "rules_channel_id": "",
+  "greetings_channel_id": "",
+
+  "verify_role_id": "",
+
+  "rules_message_id": "",
+
+  "greeting_message": "",
+
+  "verify_emote": "✅",
+
+  "message_block_list": [
+    "Lorem ipsum"
+  ],
+  "max_padding_blocked": 3,
+  "warning_message": ""
+}
