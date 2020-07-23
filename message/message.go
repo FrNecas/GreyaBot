@@ -8,8 +8,26 @@ import (
 	"strings"
 )
 
+var diacriticsReplacement = map[rune]rune{
+	'ě': 'e',
+	'š': 's',
+	'č': 'c',
+	'ř': 'r',
+	'ž': 'z',
+	'ý': 'y',
+	'á': 'a',
+	'í': 'i',
+	'é': 'e',
+	'ú': 'u',
+	'ů': 'u',
+	'ó': 'o',
+	'ť': 't',
+	'ď': 'd',
+	'ň': 'n',
+}
+
 func IsMaliciousMessage(s string, blockedRegExps []*regexp.Regexp) bool {
-	s = strings.ToLower(s)
+	s = removeDiacritics(strings.ToLower(s))
 	for _, regex := range blockedRegExps {
 		if regex.MatchString(s) {
 			return true
@@ -28,4 +46,14 @@ func FormatWelcomeMessage(welcomeMessage string, data *discordgo.GuildMemberAdd)
 	channelRegex := regexp.MustCompile(`\$channel\((.+)\)`)
 	res = channelRegex.ReplaceAllString(res, "<#$1>")
 	return res
+}
+
+func removeDiacritics(s string) string {
+	out := []rune(s)
+	for i, char := range out {
+		if val, ok := diacriticsReplacement[char]; ok {
+			out[i] = val
+		}
+	}
+	return string(out)
 }
