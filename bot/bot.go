@@ -3,11 +3,10 @@ package bot
 import (
 	"fmt"
 	"github.com/FrNecas/GreyaBot/config"
+	"github.com/FrNecas/GreyaBot/message"
 	"github.com/bwmarrin/discordgo"
 	"os"
 	"os/signal"
-	"regexp"
-	"strings"
 	"syscall"
 )
 
@@ -66,35 +65,13 @@ func HandleVerification(s *discordgo.Session, data *discordgo.MessageReactionAdd
 	}
 }
 
-func formatWelcomeMessage(data *discordgo.GuildMemberAdd) string {
-	// Replace $user with tag of the new member
-	userRegex := regexp.MustCompile(`\$user`)
-	userTag := fmt.Sprintf("<@%s>", data.User.ID)
-	res := userRegex.ReplaceAllString(config.Config.GreetingMessage, userTag)
-
-	// Replace $channel(x) with a reference to channel x
-	channelRegex := regexp.MustCompile(`\$channel\((.+)\)`)
-	res = channelRegex.ReplaceAllString(res, "<#$1>")
-	return res
-}
-
 func HandleNewMember(s *discordgo.Session, data *discordgo.GuildMemberAdd) {
 	fmt.Println("A new member joined, sending him a welcome message")
-	greeting := formatWelcomeMessage(data)
+	greeting := message.FormatWelcomeMessage(config.Config.GreetingMessage, data)
 	_, err := s.ChannelMessageSend(config.Config.GreetingsChannelID, greeting)
 	if err != nil {
 		fmt.Println("Error sending a welcome message,", err)
 	}
-}
-
-func isMaliciousMessage(s string) bool {
-	s = strings.ToLower(s)
-	for _, regex := range config.Config.BlockedRegexExps {
-		if regex.MatchString(s) {
-			return true
-		}
-	}
-	return false
 }
 
 func sendAuthorWarning(s *discordgo.Session, userID string) {
@@ -109,7 +86,7 @@ func sendAuthorWarning(s *discordgo.Session, userID string) {
 }
 
 func BlockUnwantedNewMessages(s *discordgo.Session, data *discordgo.MessageCreate) {
-	if isMaliciousMessage(data.Content) {
+	if message.IsMaliciousMessage(data.Content, config.Config.BlockedRegexExps) {
 		fmt.Println("Removing malicious message with this content,", data.Content)
 		err := s.ChannelMessageDelete(data.ChannelID, data.ID)
 		if err != nil {
@@ -120,7 +97,7 @@ func BlockUnwantedNewMessages(s *discordgo.Session, data *discordgo.MessageCreat
 }
 
 func BlockUnwantedUpdatedMessages(s *discordgo.Session, data *discordgo.MessageUpdate) {
-	if isMaliciousMessage(data.Content) {
+	if message.IsMaliciousMessage(data.Content, config.Config.BlockedRegexExps) {
 		fmt.Println("Removing malicious message with the following content,", data.Content)
 		err := s.ChannelMessageDelete(data.ChannelID, data.ID)
 		if err != nil {
