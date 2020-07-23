@@ -67,9 +67,12 @@ func HandleVerification(s *discordgo.Session, data *discordgo.MessageReactionAdd
 }
 
 func formatWelcomeMessage(data *discordgo.GuildMemberAdd) string {
+	// Replace $user with tag of the new member
 	userRegex := regexp.MustCompile(`\$user`)
 	userTag := fmt.Sprintf("<@%s>", data.User.ID)
 	res := userRegex.ReplaceAllString(config.Config.GreetingMessage, userTag)
+
+	// Replace $channel(x) with a reference to channel x
 	channelRegex := regexp.MustCompile(`\$channel\((.+)\)`)
 	res = channelRegex.ReplaceAllString(res, "<#$1>")
 	return res
