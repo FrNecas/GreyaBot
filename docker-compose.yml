@@ -1,0 +1,7 @@
+version: '3'
+services:
+  bot:
+    image: docker.io/fnecas/greyabot
+    restart: unless-stopped
+    volumes:
+      - ./config.json:/config.json
