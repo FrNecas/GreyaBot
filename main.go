@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/FrNecas/GreyaBot/bot"
 	"github.com/FrNecas/GreyaBot/config"
+	"github.com/FrNecas/GreyaBot/twitch"
 )
 
 func main() {
@@ -12,5 +13,7 @@ func main() {
 		fmt.Println("Error while creating config,", err)
 		return
 	}
-	bot.RunBot()
+	msgChannel := make(chan string)
+	twitch.StartServerGoroutine(msgChannel)
+	bot.RunBot(msgChannel)
 }

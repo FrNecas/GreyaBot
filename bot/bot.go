@@ -20,7 +20,7 @@ func addHandlers(s *discordgo.Session) {
 	s.AddHandler(BlockUnwantedUpdatedMessages)
 }
 
-func RunBot() {
+func RunBot(msgChannel chan string) {
 	// Create a new Discord session using the provided bot token.
 	session, err := discordgo.New("Bot " + config.Config.Token)
 	if err != nil {
@@ -36,11 +36,19 @@ func RunBot() {
 		return
 	}
 
-	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-	<-sc
+	go func() {
+		<-sc
+		close(msgChannel)
+	}()
+	for msg := range msgChannel {
+		_, err = session.ChannelMessageSend(config.Config.NotificationChannelID, msg)
+		if err != nil {
+			fmt.Println("Error sending a notification,", err)
+		}
+	}
 
 	err = session.Close()
 	if err != nil {
