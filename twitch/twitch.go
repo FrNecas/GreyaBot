@@ -20,7 +20,7 @@ import (
 
 const handlerPath = "/twitch/streams"
 const liveStream = "live"
-const subscribeFor = 900
+const subscribeFor = 86400
 const refreshSubAfter = subscribeFor / 4 * 3
 
 func authMiddleware(next http.Handler) http.Handler {
