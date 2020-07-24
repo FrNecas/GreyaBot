@@ -11,6 +11,18 @@ import (
 
 var Config config
 
+type streamerConfig struct {
+	Name  string `json:"name"`
+	ID    string
+	Start string `json:"start"`
+	End   string `json:"end"`
+}
+
+type OAuthToken struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int    `json:"expires_in"`
+}
+
 type config struct {
 	// Discord API token
 	Token string `json:"token"`
@@ -19,6 +31,8 @@ type config struct {
 	RulesChannelID string `json:"rules_channel_id"`
 	// ID of the channel where users are greeted
 	GreetingsChannelID string `json:"greetings_channel_id"`
+	// ID of the channel for twitch notifications
+	NotificationChannelID string `json:"notification_channel_id"`
 
 	// ID of the verify role which is granted upon verification
 	VerifyRoleID string `json:"verify_role_id"`
@@ -42,6 +56,16 @@ type config struct {
 	MaxPaddingBlocked int `json:"max_padding_blocked"`
 	// A message that is sent to a user violating rules
 	WarningMessage string `json:"warning_message"`
+
+	TwitchClientID     string `json:"twitch_client_id"`
+	TwitchClientSecret string `json:"twitch_client_secret"`
+	// Secret used for payload verification
+	TwitchSubscribeSecret string `json:"twitch_subscribe_secret"`
+	TwitchServerAddress   string `json:"twitch_server_address"`
+	TwitchBaseURL         string `json:"twitch_base_url"`
+	TwitchOAuth           OAuthToken
+	Streamers             []streamerConfig `json:"streamers"`
+	EndpointToStreamer    map[string]*streamerConfig
 }
 
 // Prepares RegExps for blocking malicious messages
@@ -65,6 +89,7 @@ func prepareBlockList() {
 
 func ReadConfig() error {
 	data, err := ioutil.ReadFile("./config.json")
+	Config.EndpointToStreamer = make(map[string]*streamerConfig)
 	if err != nil {
 		return err
 	}

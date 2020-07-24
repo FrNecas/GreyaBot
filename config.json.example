@@ -3,6 +3,7 @@
 
   "rules_channel_id": "",
   "greetings_channel_id": "",
+  "notification_channel_id": "",
 
   "verify_role_id": "",
 
@@ -16,5 +17,18 @@
     "Lorem ipsum"
   ],
   "max_padding_blocked": 3,
-  "warning_message": ""
+  "warning_message": "",
+
+  "twitch_client_id": "",
+  "twitch_client_secret": "",
+  "twitch_subscribe_secret": "",
+  "twitch_base_url": "google.com"
+  "twitch_server_address": ":8080",
+  "streamers": [
+    {
+      "name": "streamer1",
+      "start": "stream started",
+      "end": "streamn ended"
+    }
+  ]
 }
