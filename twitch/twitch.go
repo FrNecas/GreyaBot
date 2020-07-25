@@ -58,9 +58,12 @@ func (h *twitchWebHookHandler) processNotification(r *http.Request) {
 		}
 		if len(streamData.Data) == 0 {
 			// Stream offline
-			msg := config.Config.EndpointToStreamer[endpoint[0]].End
-			if msg != "" {
-				h.msgChannel <- msg
+			streamer, ok := config.Config.EndpointToStreamer[endpoint[0]]
+			if ok {
+				msg := streamer.End
+				if msg != "" {
+					h.msgChannel <- msg
+				}
 			}
 			return
 		}
@@ -72,9 +75,12 @@ func (h *twitchWebHookHandler) processNotification(r *http.Request) {
 		h.receivedIDs[streamData.Data[0].ID] = true
 		if streamData.Data[0].Type == liveStream {
 			// Stream online
-			msg := config.Config.EndpointToStreamer[endpoint[0]].Start
-			if msg != "" {
-				h.msgChannel <- msg
+			streamer, ok := config.Config.EndpointToStreamer[endpoint[0]]
+			if ok {
+				msg := streamer.Start
+				if msg != "" {
+					h.msgChannel <- msg
+				}
 			}
 		}
 	}
