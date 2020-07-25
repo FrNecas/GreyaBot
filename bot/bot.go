@@ -10,6 +10,8 @@ import (
 	"syscall"
 )
 
+var BotID string
+
 func addHandlers(s *discordgo.Session) {
 	// Declare intents and add handlers
 	s.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMembers |
@@ -28,6 +30,12 @@ func RunBot(msgChannel chan string) {
 		return
 	}
 	addHandlers(session)
+	u, errUser := session.User("@me")
+	if errUser != nil {
+		fmt.Println("Error getting BotID,", err)
+		return
+	}
+	BotID = u.ID
 
 	// Open a websocket connection to Discord and begin listening.
 	err = session.Open()
@@ -57,7 +65,7 @@ func RunBot(msgChannel chan string) {
 }
 
 func HandleVerification(s *discordgo.Session, data *discordgo.MessageReactionAdd) {
-	if data.MessageID != config.Config.RulesMessageID {
+	if data.MessageID != config.Config.RulesMessageID || data.UserID == BotID {
 		return
 	}
 	if data.Emoji.Name == config.Config.VerifyEmote {
@@ -70,6 +78,12 @@ func HandleVerification(s *discordgo.Session, data *discordgo.MessageReactionAdd
 	err := s.MessageReactionsRemoveAll(config.Config.RulesChannelID, config.Config.RulesMessageID)
 	if err != nil {
 		fmt.Println("Error removing reactions from message after verification,", err)
+	} else {
+		err = s.MessageReactionAdd(config.Config.RulesChannelID, config.Config.RulesMessageID,
+			config.Config.VerifyEmote)
+		if err != nil {
+			fmt.Println("Error adding verify reaction to rules message,", err)
+		}
 	}
 }
 
