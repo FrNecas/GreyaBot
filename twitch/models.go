@@ -1,7 +1,9 @@
 package twitch
 
+import "github.com/bwmarrin/discordgo"
+
 type twitchWebHookHandler struct {
-	msgChannel  chan string
+	msgChannel  chan *discordgo.MessageSend
 	receivedIDs map[string]bool
 }
 
@@ -17,13 +19,25 @@ type subRequest struct {
 // processing in the bot
 type streamResponse struct {
 	Data []struct {
-		ID   string `json:"id"`
-		Type string `json:"type"`
+		ID           string `json:"id"`
+		GameID       string `json:"game_id"`
+		Title        string `json:"title"`
+		ViewerCount  int    `json:"viewer_count"`
+		ThumbnailURL string `json:"thumbnail_url"`
+		Type         string `json:"type"`
 	} `json:"data"`
 }
 
 type userResponse struct {
 	Data []struct {
-		ID string `json:"id"`
+		ID              string `json:"id"`
+		DisplayName     string `json:"display_name"`
+		ProfileImageURL string `json:"profile_image_url"`
 	} `json:"data"`
+}
+
+type gameResponse struct {
+	Data []struct {
+		Name string `json:"name"`
+	}
 }

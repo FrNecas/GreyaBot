@@ -12,10 +12,12 @@ import (
 var Config config
 
 type streamerConfig struct {
-	Name  string `json:"name"`
-	ID    string
-	Start string `json:"start"`
-	End   string `json:"end"`
+	Name            string `json:"name"`
+	ID              string
+	Start           string `json:"start"`
+	End             string `json:"end"`
+	ProfileImageURL string
+	DisplayName     string
 }
 
 type OAuthToken struct {

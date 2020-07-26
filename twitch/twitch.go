@@ -10,16 +10,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/FrNecas/GreyaBot/config"
+	"github.com/bwmarrin/discordgo"
 	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
 const handlerPath = "/twitch/streams"
 const liveStream = "live"
+const thumbnailWidth = "320"
+const thumbnailHeight = "180"
 const subscribeFor = 86400
 const refreshSubAfter = subscribeFor / 4 * 3
 
@@ -45,6 +49,62 @@ func authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func getGameName(gameID string) string {
+	if gameID == "" {
+		return ""
+	}
+	client := http.Client{Timeout: time.Second * 2}
+	endpoint := fmt.Sprintf("https://api.twitch.tv/helix/games?id=%s", gameID)
+	req := createAuthenticatedRequest(http.MethodGet, endpoint, nil)
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error occurred when getting game data,", err)
+		return ""
+	}
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	var gameData gameResponse
+	json.NewDecoder(resp.Body).Decode(&gameData)
+	return gameData.Data[0].Name
+}
+
+func (h *twitchWebHookHandler) createEmbed(data streamResponse, endpoint string) *discordgo.MessageSend {
+	streamer, ok := config.Config.EndpointToStreamer[endpoint]
+	if !ok {
+		return nil
+	}
+	thumbnail := strings.ReplaceAll(data.Data[0].ThumbnailURL, "{width}", thumbnailWidth)
+	embed := &discordgo.MessageEmbed{
+		Author: &discordgo.MessageEmbedAuthor{
+			Name:    streamer.DisplayName,
+			IconURL: streamer.ProfileImageURL,
+		},
+		Color: 0x6441a5,
+		Fields: []*discordgo.MessageEmbedField{
+			&discordgo.MessageEmbedField{
+				Name:   "Game",
+				Value:  getGameName(data.Data[0].GameID),
+				Inline: true,
+			},
+			&discordgo.MessageEmbedField{
+				Name:   "Viewers",
+				Value:  strconv.Itoa(data.Data[0].ViewerCount),
+				Inline: true,
+			},
+		},
+		Image: &discordgo.MessageEmbedImage{
+			URL: strings.ReplaceAll(thumbnail, "{height}", thumbnailHeight),
+		},
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL: streamer.ProfileImageURL,
+		},
+		Timestamp: time.Now().Format(time.RFC3339),
+		Title:     data.Data[0].Title,
+	}
+	return &discordgo.MessageSend{Content: streamer.Start, Embed: embed}
+}
+
 func (h *twitchWebHookHandler) processNotification(r *http.Request) {
 	query := r.URL.Query()
 	var streamData streamResponse
@@ -62,7 +122,7 @@ func (h *twitchWebHookHandler) processNotification(r *http.Request) {
 			if ok {
 				msg := streamer.End
 				if msg != "" {
-					h.msgChannel <- msg
+					h.msgChannel <- &discordgo.MessageSend{Content: streamer.End}
 				}
 			}
 			return
@@ -75,12 +135,8 @@ func (h *twitchWebHookHandler) processNotification(r *http.Request) {
 		h.receivedIDs[streamData.Data[0].ID] = true
 		if streamData.Data[0].Type == liveStream {
 			// Stream online
-			streamer, ok := config.Config.EndpointToStreamer[endpoint[0]]
-			if ok {
-				msg := streamer.Start
-				if msg != "" {
-					h.msgChannel <- msg
-				}
+			if msg := h.createEmbed(streamData, endpoint[0]); msg != nil {
+				h.msgChannel <- msg
 			}
 		}
 	}
@@ -171,14 +227,13 @@ func subscribe(callback string, userID string) {
 	}()
 }
 
-func getUserID(name string) string {
+func getUserData(name string) userResponse {
 	client := http.Client{Timeout: time.Second * 2}
 	endpoint := fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", name)
 	req := createAuthenticatedRequest(http.MethodGet, endpoint, nil)
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error occurred when getting a oauth token,", err)
-		return ""
+		fmt.Println("Error occurred when getting user data,", err)
 	}
 	if resp != nil {
 		defer resp.Body.Close()
@@ -186,10 +241,7 @@ func getUserID(name string) string {
 	var userData userResponse
 	json.NewDecoder(resp.Body).Decode(&userData)
 
-	if len(userData.Data) == 0 {
-		return ""
-	}
-	return userData.Data[0].ID
+	return userData
 }
 
 func createAuthenticatedRequest(method string, target string, body io.Reader) *http.Request {
@@ -199,11 +251,16 @@ func createAuthenticatedRequest(method string, target string, body io.Reader) *h
 	return req
 }
 
-func StartServerGoroutine(msgChannel chan string) {
+func StartServerGoroutine(msgChannel chan *discordgo.MessageSend) {
 	getOAuthToken()
 	for i, streamer := range config.Config.Streamers {
-		id := getUserID(streamer.Name)
-		config.Config.Streamers[i].ID = id
+		data := getUserData(streamer.Name)
+		if len(data.Data) == 0 {
+			continue
+		}
+		config.Config.Streamers[i].ID = data.Data[0].ID
+		config.Config.Streamers[i].DisplayName = data.Data[0].DisplayName
+		config.Config.Streamers[i].ProfileImageURL = data.Data[0].ProfileImageURL
 		subNum := 0
 		for subNum == 0 {
 			newNum := rand.Int()
@@ -215,7 +272,7 @@ func StartServerGoroutine(msgChannel chan string) {
 		config.Config.EndpointToStreamer[strconv.Itoa(subNum)] = &streamer
 		endpoint := fmt.Sprintf("%s%s?subscription=%d", config.Config.TwitchBaseURL,
 			handlerPath, subNum)
-		subscribe(endpoint, id)
+		subscribe(endpoint, data.Data[0].ID)
 	}
 	mux := http.NewServeMux()
 	handler := twitchWebHookHandler{msgChannel: msgChannel}

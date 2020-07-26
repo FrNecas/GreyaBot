@@ -22,7 +22,7 @@ func addHandlers(s *discordgo.Session) {
 	s.AddHandler(BlockUnwantedUpdatedMessages)
 }
 
-func RunBot(msgChannel chan string) {
+func RunBot(msgChannel chan *discordgo.MessageSend) {
 	// Create a new Discord session using the provided bot token.
 	session, err := discordgo.New("Bot " + config.Config.Token)
 	if err != nil {
@@ -47,14 +47,15 @@ func RunBot(msgChannel chan string) {
 	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-	go func() {
-		<-sc
-		close(msgChannel)
-	}()
-	for msg := range msgChannel {
-		_, err = session.ChannelMessageSend(config.Config.NotificationChannelID, msg)
-		if err != nil {
-			fmt.Println("Error sending a notification,", err)
+	for n := 1; n > 0; {
+		select {
+		case msg := <-msgChannel:
+			_, err = session.ChannelMessageSendComplex(config.Config.NotificationChannelID, msg)
+			if err != nil {
+				fmt.Println("Error sending a notification,", err)
+			}
+		case <-sc:
+			n--
 		}
 	}
 

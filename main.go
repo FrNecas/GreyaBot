@@ -5,6 +5,7 @@ import (
 	"github.com/FrNecas/GreyaBot/bot"
 	"github.com/FrNecas/GreyaBot/config"
 	"github.com/FrNecas/GreyaBot/twitch"
+	"github.com/bwmarrin/discordgo"
 )
 
 func main() {
@@ -13,7 +14,7 @@ func main() {
 		fmt.Println("Error while creating config,", err)
 		return
 	}
-	msgChannel := make(chan string)
+	msgChannel := make(chan *discordgo.MessageSend)
 	twitch.StartServerGoroutine(msgChannel)
 	bot.RunBot(msgChannel)
 }
