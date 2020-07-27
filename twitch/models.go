@@ -20,7 +20,7 @@ type subRequest struct {
 type streamResponse struct {
 	Data []struct {
 		ID           string `json:"id"`
-		GameID       string `json:"game_id"`
+		GameID       string `json:"game_id,omitempty"`
 		Title        string `json:"title"`
 		ViewerCount  int    `json:"viewer_count"`
 		ThumbnailURL string `json:"thumbnail_url"`
@@ -31,8 +31,8 @@ type streamResponse struct {
 type userResponse struct {
 	Data []struct {
 		ID              string `json:"id"`
-		DisplayName     string `json:"display_name"`
-		ProfileImageURL string `json:"profile_image_url"`
+		DisplayName     string `json:"display_name,omitempty"`
+		ProfileImageURL string `json:"profile_image_url,omitempty"`
 	} `json:"data"`
 }
 

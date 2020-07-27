@@ -198,10 +198,18 @@ func getOAuthToken() {
 	}()
 }
 
-func subscribe(callback string, userID string) {
+func UnsubscribeAll() {
+	for endpointID, streamer := range config.Config.EndpointToStreamer {
+		subscribe(endpointID, streamer.ID, "unsubscribe")
+	}
+}
+
+func subscribe(callbackID string, userID string, mode string) {
+	callback := fmt.Sprintf("%s%s?subscription=%s", config.Config.TwitchBaseURL,
+		handlerPath, callbackID)
 	subData := subRequest{
 		Callback:     callback,
-		Mode:         "subscribe",
+		Mode:         mode,
 		Topic:        fmt.Sprintf("https://api.twitch.tv/helix/streams?user_id=%s", userID),
 		LeaseSeconds: subscribeFor,
 		Secret:       config.Config.TwitchSubscribeSecret,
@@ -212,7 +220,7 @@ func subscribe(callback string, userID string) {
 		return
 	}
 
-	fmt.Printf("Subscribing to %s on %s\n", subData.Topic, callback)
+	fmt.Printf("%s to %s on %s\n", mode, subData.Topic, callback)
 	client := http.Client{Timeout: time.Second * 2}
 	reqSub := createAuthenticatedRequest(http.MethodPost, "https://api.twitch.tv/helix/webhooks/hub",
 		bytes.NewBuffer(datajson))
@@ -221,10 +229,12 @@ func subscribe(callback string, userID string) {
 	if resp.StatusCode != http.StatusAccepted {
 		fmt.Println("Subscription didn't respond with 202")
 	}
-	go func() {
-		time.Sleep(refreshSubAfter * time.Second)
-		subscribe(callback, userID)
-	}()
+	if mode == "subscribe" {
+		go func() {
+			time.Sleep(refreshSubAfter * time.Second)
+			subscribe(callbackID, userID, mode)
+		}()
+	}
 }
 
 func getUserData(name string) userResponse {
@@ -269,10 +279,8 @@ func StartServerGoroutine(msgChannel chan *discordgo.MessageSend) {
 			}
 			subNum = newNum
 		}
-		config.Config.EndpointToStreamer[strconv.Itoa(subNum)] = &streamer
-		endpoint := fmt.Sprintf("%s%s?subscription=%d", config.Config.TwitchBaseURL,
-			handlerPath, subNum)
-		subscribe(endpoint, data.Data[0].ID)
+		config.Config.EndpointToStreamer[strconv.Itoa(subNum)] = &config.Config.Streamers[i]
+		subscribe(strconv.Itoa(subNum), data.Data[0].ID, "subscribe")
 	}
 	mux := http.NewServeMux()
 	handler := twitchWebHookHandler{msgChannel: msgChannel}

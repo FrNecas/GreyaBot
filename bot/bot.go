@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/FrNecas/GreyaBot/config"
 	"github.com/FrNecas/GreyaBot/message"
+	"github.com/FrNecas/GreyaBot/twitch"
 	"github.com/bwmarrin/discordgo"
 	"os"
 	"os/signal"
@@ -59,6 +60,7 @@ func RunBot(msgChannel chan *discordgo.MessageSend) {
 		}
 	}
 
+	twitch.UnsubscribeAll()
 	err = session.Close()
 	if err != nil {
 		fmt.Println("Error closing the session,", err)
