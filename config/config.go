@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var Config config
@@ -18,6 +19,7 @@ type streamerConfig struct {
 	End             string `json:"end"`
 	ProfileImageURL string
 	DisplayName     string
+	LastOnline      time.Time
 }
 
 type OAuthToken struct {
@@ -68,6 +70,8 @@ type config struct {
 	TwitchOAuth           OAuthToken
 	Streamers             []streamerConfig `json:"streamers"`
 	EndpointToStreamer    map[string]*streamerConfig
+	// Number of minutes after which a stream start is considered a restart and is ignored
+	RestartCoolDown int `json:"restart_cool_down"`
 }
 
 // Prepares RegExps for blocking malicious messages

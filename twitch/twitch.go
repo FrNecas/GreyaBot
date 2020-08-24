@@ -116,14 +116,16 @@ func (h *twitchWebHookHandler) processNotification(r *http.Request) {
 		if len(endpoint) == 0 {
 			return
 		}
+		streamer, ok := config.Config.EndpointToStreamer[endpoint[0]]
+		if !ok {
+			return
+		}
 		if len(streamData.Data) == 0 {
 			// Stream offline
-			streamer, ok := config.Config.EndpointToStreamer[endpoint[0]]
-			if ok {
-				msg := streamer.End
-				if msg != "" {
-					h.msgChannel <- &discordgo.MessageSend{Content: streamer.End}
-				}
+			streamer.LastOnline = time.Now()
+			msg := streamer.End
+			if msg != "" {
+				h.msgChannel <- &discordgo.MessageSend{Content: streamer.End}
 			}
 			return
 		}
@@ -135,6 +137,11 @@ func (h *twitchWebHookHandler) processNotification(r *http.Request) {
 		h.receivedIDs[streamData.Data[0].ID] = true
 		if streamData.Data[0].Type == liveStream {
 			// Stream online
+			sinceLastStream := time.Now().Sub(streamer.LastOnline)
+			if sinceLastStream < time.Duration(config.Config.RestartCoolDown) * time.Minute {
+				fmt.Printf("Detected a stream restart for %s\n", streamer.Name)
+				return
+			}
 			if msg := h.createEmbed(streamData, endpoint[0]); msg != nil {
 				h.msgChannel <- msg
 			}

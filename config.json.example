@@ -30,5 +30,6 @@
       "start": "stream started",
       "end": "streamn ended"
     }
-  ]
+  ],
+  "restart_cool_down": 10
 }
