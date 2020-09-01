@@ -7,6 +7,7 @@ A discord bot created for managing a server used by the community around a Twitc
 - A welcome customizable message sent to each new user.
 - User verification requiring agreeing to the rules of a server.
 - Language filter that can remove certain phrases. An example use-case of this is avoiding disclosure of personal information.
+- Reacting to commands predefined in the configuration file.
 - A twitch module used for connecting to the Twitch webhook API and receiving updates about the stream. The updates are sent as an embedded discord message.
 
 ## Building and running

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/FrNecas/GreyaBot/message"
 	"io/ioutil"
 	"regexp"
 	"strings"
@@ -25,6 +26,11 @@ type streamerConfig struct {
 type OAuthToken struct {
 	AccessToken string `json:"access_token"`
 	ExpiresIn   int    `json:"expires_in"`
+}
+
+type SimpleCommand struct {
+	Command string `json:"command"`
+	Reaction string `json:"reaction"`
 }
 
 type config struct {
@@ -52,6 +58,10 @@ type config struct {
 	//    $channel(id) which will be replaced with a link to channel with the id
 	GreetingMessage       string `json:"greeting_message"`
 	UnknownCommandMessage string `json:"unknown_command_message"`
+
+	// Predefined command reactions. Do not include the BotPrefix in the
+	// command name.
+	PredefinedCommands []SimpleCommand `json:"predefined_commands"`
 
 	// The emote used for verification
 	VerifyEmote string `json:"verify_emote"`
@@ -97,6 +107,13 @@ func prepareBlockList() {
 	}
 }
 
+// Preprocesses commands - removes the diacritics in their names
+func removeCommandDiacritics() {
+	for i, cmd := range Config.PredefinedCommands {
+		Config.PredefinedCommands[i].Command = message.RemoveDiacritics(cmd.Command)
+	}
+}
+
 func ReadConfig() error {
 	data, err := ioutil.ReadFile("./config.json")
 	Config.EndpointToStreamer = make(map[string]*streamerConfig)
@@ -108,5 +125,6 @@ func ReadConfig() error {
 		return err
 	}
 	prepareBlockList()
+	removeCommandDiacritics()
 	return nil
 }

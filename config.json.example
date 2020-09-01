@@ -13,6 +13,13 @@
   "greeting_message": "",
   "unknown_command_message": "",
 
+  "predefined_commands": [
+    {
+      "command": "ping",
+      "reaction": "pong"
+    }
+  ],
+
   "verify_emote": "✅",
 
   "message_block_list": [
