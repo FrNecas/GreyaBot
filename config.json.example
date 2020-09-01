@@ -1,5 +1,6 @@
 {
   "token": "",
+  "bot_prefix": "!",
 
   "rules_channel_id": "",
   "greetings_channel_id": "",
@@ -10,6 +11,7 @@
   "rules_message_id": "",
 
   "greeting_message": "",
+  "unknown_command_message": "",
 
   "verify_emote": "✅",
 

@@ -31,6 +31,8 @@ type config struct {
 	// Discord API token
 	Token string `json:"token"`
 	BotID string
+	// Prefix for bot commands
+	BotPrefix string `json:"bot_prefix"`
 
 	// ID of the channel containing server rules
 	RulesChannelID string `json:"rules_channel_id"`
@@ -48,7 +50,8 @@ type config struct {
 	// The greetings message may contain the following macros:
 	//    $user which will be replaced with the new user tag
 	//    $channel(id) which will be replaced with a link to channel with the id
-	GreetingMessage string `json:"greeting_message"`
+	GreetingMessage       string `json:"greeting_message"`
+	UnknownCommandMessage string `json:"unknown_command_message"`
 
 	// The emote used for verification
 	VerifyEmote string `json:"verify_emote"`

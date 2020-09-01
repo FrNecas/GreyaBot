@@ -27,7 +27,7 @@ var diacriticsReplacement = map[rune]rune{
 }
 
 func IsMaliciousMessage(s string, blockedRegExps []*regexp.Regexp) bool {
-	s = removeDiacritics(strings.ToLower(s))
+	s = RemoveDiacritics(strings.ToLower(s))
 	for _, regex := range blockedRegExps {
 		if regex.MatchString(s) {
 			return true
@@ -48,7 +48,7 @@ func FormatWelcomeMessage(welcomeMessage string, data *discordgo.GuildMemberAdd)
 	return res
 }
 
-func removeDiacritics(s string) string {
+func RemoveDiacritics(s string) string {
 	out := []rune(s)
 	for i, char := range out {
 		if val, ok := diacriticsReplacement[char]; ok {

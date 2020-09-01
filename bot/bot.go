@@ -2,12 +2,14 @@ package bot
 
 import (
 	"fmt"
+	"github.com/FrNecas/GreyaBot/commands"
 	"github.com/FrNecas/GreyaBot/config"
 	"github.com/FrNecas/GreyaBot/message"
 	"github.com/FrNecas/GreyaBot/twitch"
 	"github.com/bwmarrin/discordgo"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 )
 
@@ -17,7 +19,7 @@ func addHandlers(s *discordgo.Session) {
 		discordgo.IntentsGuildMessageReactions | discordgo.IntentsGuildMessages)
 	s.AddHandler(HandleVerification)
 	s.AddHandler(HandleNewMember)
-	s.AddHandler(BlockUnwantedNewMessages)
+	s.AddHandler(MessageReceived)
 	s.AddHandler(BlockUnwantedUpdatedMessages)
 }
 
@@ -108,7 +110,16 @@ func sendAuthorWarning(s *discordgo.Session, userID string) {
 	}
 }
 
-func BlockUnwantedNewMessages(s *discordgo.Session, data *discordgo.MessageCreate) {
+func MessageReceived(s *discordgo.Session, data *discordgo.MessageCreate) {
+	if data.Author.ID == config.Config.BotID {
+		return
+	}
+
+	if strings.HasPrefix(data.Content, config.Config.BotPrefix) {
+		commands.Execute(s, data.Message)
+		return
+	}
+
 	if message.IsMaliciousMessage(data.Content, config.Config.BlockedRegexExps) {
 		fmt.Println("Removing malicious message with this content,", data.Content)
 		err := s.ChannelMessageDelete(data.ChannelID, data.ID)
