@@ -30,6 +30,7 @@ type OAuthToken struct {
 type config struct {
 	// Discord API token
 	Token string `json:"token"`
+	BotID string
 
 	// ID of the channel containing server rules
 	RulesChannelID string `json:"rules_channel_id"`

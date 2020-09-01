@@ -11,8 +11,6 @@ import (
 	"syscall"
 )
 
-var BotID string
-
 func addHandlers(s *discordgo.Session) {
 	// Declare intents and add handlers
 	s.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMembers |
@@ -36,7 +34,7 @@ func RunBot(msgChannel chan *discordgo.MessageSend) {
 		fmt.Println("Error getting BotID,", err)
 		return
 	}
-	BotID = u.ID
+	config.Config.BotID = u.ID
 
 	// Open a websocket connection to Discord and begin listening.
 	err = session.Open()
@@ -68,7 +66,7 @@ func RunBot(msgChannel chan *discordgo.MessageSend) {
 }
 
 func HandleVerification(s *discordgo.Session, data *discordgo.MessageReactionAdd) {
-	if data.MessageID != config.Config.RulesMessageID || data.UserID == BotID {
+	if data.MessageID != config.Config.RulesMessageID || data.UserID == config.Config.BotID {
 		return
 	}
 	if data.Emoji.Name == config.Config.VerifyEmote {
