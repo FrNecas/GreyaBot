@@ -248,14 +248,15 @@ func getUserData(name string) userResponse {
 	client := http.Client{Timeout: time.Second * 2}
 	endpoint := fmt.Sprintf("https://api.twitch.tv/helix/users?login=%s", name)
 	req := createAuthenticatedRequest(http.MethodGet, endpoint, nil)
+	var userData userResponse
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error occurred when getting user data,", err)
+		return userData
 	}
 	if resp != nil {
 		defer resp.Body.Close()
 	}
-	var userData userResponse
 	json.NewDecoder(resp.Body).Decode(&userData)
 
 	return userData
