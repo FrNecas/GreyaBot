@@ -23,4 +23,6 @@ FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/src/github.com/FrNecas/GreyaBot/main /
 
+USER 1001
+
 ENTRYPOINT ["/main"]
