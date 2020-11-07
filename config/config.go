@@ -29,7 +29,7 @@ type OAuthToken struct {
 }
 
 type SimpleCommand struct {
-	Command string `json:"command"`
+	Command  string `json:"command"`
 	Reaction string `json:"reaction"`
 }
 

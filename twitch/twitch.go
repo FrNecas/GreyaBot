@@ -138,6 +138,7 @@ func (h *twitchWebHookHandler) processNotification(r *http.Request) {
 		if streamData.Data[0].Type == liveStream {
 			// Stream online
 			sinceLastStream := time.Now().Sub(streamer.LastOnline)
+			streamer.LastOnline = time.Now()
 			if sinceLastStream < time.Duration(config.Config.RestartCoolDown)*time.Minute {
 				fmt.Printf("Detected a stream restart for %s\n", streamer.Name)
 				return
