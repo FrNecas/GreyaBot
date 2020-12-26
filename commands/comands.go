@@ -10,7 +10,7 @@ import (
 
 func Execute(s *discordgo.Session, m *discordgo.Message) {
 	msg := strings.TrimPrefix(m.Content, config.Config.BotPrefix)
-	withoutDiacritics := message.RemoveDiacritics(msg)
+	withoutDiacritics := strings.ToLower(message.RemoveDiacritics(msg))
 	switch withoutDiacritics {
 	// More special and complex commands can be added here
 	default:
