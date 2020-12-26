@@ -75,6 +75,8 @@ func (h *twitchWebHookHandler) createEmbed(data streamResponse, endpoint string)
 		return nil
 	}
 	thumbnail := strings.ReplaceAll(data.Data[0].ThumbnailURL, "{width}", thumbnailWidth)
+	thumbnail = strings.ReplaceAll(thumbnail, "{height}", thumbnailHeight)
+	thumbnail += "?timestamp=" + strconv.FormatInt(time.Now().Unix(), 10)
 	embed := &discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{
 			Name:    streamer.DisplayName,
@@ -94,7 +96,7 @@ func (h *twitchWebHookHandler) createEmbed(data streamResponse, endpoint string)
 			},
 		},
 		Image: &discordgo.MessageEmbedImage{
-			URL: strings.ReplaceAll(thumbnail, "{height}", thumbnailHeight),
+			URL: thumbnail,
 		},
 		Thumbnail: &discordgo.MessageEmbedThumbnail{
 			URL: streamer.ProfileImageURL,
