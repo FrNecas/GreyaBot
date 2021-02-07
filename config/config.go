@@ -39,6 +39,8 @@ type config struct {
 	BotID string
 	// Prefix for bot commands
 	BotPrefix string `json:"bot_prefix"`
+	// Postgresql connection string
+	PsqlConnection string `json:"psql_connection"`
 
 	// ID of the channel containing server rules
 	RulesChannelID string `json:"rules_channel_id"`

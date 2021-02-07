@@ -22,6 +22,7 @@ FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /go/src/github.com/FrNecas/GreyaBot/main /
+COPY --from=builder /go/src/github.com/FrNecas/GreyaBot/db/migrations /db/migrations
 
 USER 1001
 

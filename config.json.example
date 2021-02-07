@@ -1,6 +1,7 @@
 {
   "token": "",
   "bot_prefix": "!",
+  "psql_connection": "postgres://postgres:1234@db:5432/postgres"
 
   "rules_channel_id": "",
   "greetings_channel_id": "",

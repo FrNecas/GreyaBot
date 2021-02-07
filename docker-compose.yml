@@ -1,5 +1,12 @@
 version: '3'
 services:
+  db:
+    image: "postgres"
+    restart: unless-stopped
+    env_file:
+      - database.env
+    volumes:
+      - database-data:/var/lib/postgresql/data/
   bot:
     image: docker.io/fnecas/greyabot
     restart: unless-stopped
@@ -7,3 +14,8 @@ services:
       - ./config.json:/config.json
     ports:
       -  "127.0.0.1:8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  database-data:
