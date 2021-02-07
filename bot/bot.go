@@ -49,6 +49,7 @@ func RunBot(msgChannel chan *discordgo.MessageSend) {
 		fmt.Println("Error opening connection,", err)
 		return
 	}
+	purgeDynamicChannels(session)
 
 	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
@@ -226,6 +227,41 @@ func removeChannel(s *discordgo.Session, data *discordgo.VoiceStateUpdate, datab
 	}
 }
 
+func purgeDynamicChannels(s *discordgo.Session) {
+	channelUsage := make(map[string]int)
+	for _, guild := range s.State.Guilds {
+		// Set all voice channels to 0 usages
+		channels, err := s.GuildChannels(guild.ID)
+		if err != nil {
+			fmt.Println("Couldn't get channels of a guild when pruning")
+			return
+		}
+		for _, channel := range channels {
+			if channel.Type == discordgo.ChannelTypeGuildVoice {
+				channelUsage[channel.ID] = 0
+			}
+		}
+		// Count the number of active voice connections
+		for _, state := range guild.VoiceStates {
+			channelUsage[state.ChannelID]++
+		}
+	}
+	database, err := db.Connect()
+	if err != nil {
+		fmt.Println("Error when connecting to database while pruning")
+		return
+	}
+	fmt.Println(channelUsage)
+	for channel, usages := range channelUsage {
+		if usages == 0 && isDynamicChannel(database, channel) {
+			fmt.Printf("Deleting voice channel %s\n", channel)
+			_, err := s.ChannelDelete(channel)
+			if err != nil {
+				fmt.Println("Error when deleting a channel,", err)
+			}
+		}
+	}
+}
 
 func VoiceUpdate(s *discordgo.Session, data *discordgo.VoiceStateUpdate) {
 	database, err := db.Connect()

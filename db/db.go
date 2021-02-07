@@ -16,6 +16,9 @@ func Connect() (*sql.DB, error) {
 	var db *sql.DB
 	for i := 0; i < connectRetries; i++ {
 		db, err = sql.Open("postgres", config.Config.PsqlConnection)
+		if err == nil {
+			err = db.Ping()
+		}
 		if err != nil {
 			fmt.Println("Unable to connect to the database, retrying")
 			time.Sleep(5 * time.Second)

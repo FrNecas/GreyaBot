@@ -2,7 +2,7 @@
   "token": "",
   "bot_prefix": "!",
   "admin_id": "",
-  "psql_connection": "postgres://postgres:1234@db:5432/postgres"
+  "psql_connection": "postgres://postgres:1234@db:5432/postgres",
 
   "rules_channel_id": "",
   "greetings_channel_id": "",
@@ -44,5 +44,5 @@
   ],
   "restart_cool_down": 10,
   "main_voice_id": "",
-  "voice_category_id": "",
+  "voice_category_id": ""
 }
