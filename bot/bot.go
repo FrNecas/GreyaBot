@@ -224,6 +224,10 @@ func removeChannel(s *discordgo.Session, data *discordgo.VoiceStateUpdate, datab
 		if err != nil {
 			fmt.Println("Error when deleting a channel,", err)
 		}
+		_, err = database.Exec(`DELETE FROM voice_channels WHERE channel_id = $1`, data.BeforeUpdate.ChannelID)
+		if err != nil {
+			fmt.Println("Error when deleting a channel from a database,", err)
+		}
 	}
 }
 
@@ -257,6 +261,10 @@ func purgeDynamicChannels(s *discordgo.Session) {
 			_, err := s.ChannelDelete(channel)
 			if err != nil {
 				fmt.Println("Error when deleting a channel,", err)
+			}
+			_, err = database.Exec(`DELETE FROM voice_channels WHERE channel_id = $1`, channel)
+			if err != nil {
+				fmt.Println("Error when deleting a channel from a database,", err)
 			}
 		}
 	}
