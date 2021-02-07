@@ -35,8 +35,9 @@ type SimpleCommand struct {
 
 type config struct {
 	// Discord API token
-	Token string `json:"token"`
-	BotID string
+	Token   string `json:"token"`
+	BotID   string
+	AdminID string `json:"admin_id"`
 	// Prefix for bot commands
 	BotPrefix string `json:"bot_prefix"`
 	// Postgresql connection string
@@ -88,6 +89,10 @@ type config struct {
 	EndpointToStreamer    map[string]*streamerConfig
 	// Number of minutes after which a stream start is considered a restart and is ignored
 	RestartCoolDown int `json:"restart_cool_down"`
+
+	// Voice-related
+	MainVoiceID     string `json:"main_voice_id"`
+	VoiceCategoryID string `json:"voice_category_id"`
 }
 
 // Prepares RegExps for blocking malicious messages

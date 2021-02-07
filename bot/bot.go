@@ -1,9 +1,11 @@
 package bot
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/FrNecas/GreyaBot/commands"
 	"github.com/FrNecas/GreyaBot/config"
+	"github.com/FrNecas/GreyaBot/db"
 	"github.com/FrNecas/GreyaBot/message"
 	"github.com/FrNecas/GreyaBot/twitch"
 	"github.com/bwmarrin/discordgo"
@@ -16,11 +18,14 @@ import (
 func addHandlers(s *discordgo.Session) {
 	// Declare intents and add handlers
 	s.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMembers |
-		discordgo.IntentsGuildMessageReactions | discordgo.IntentsGuildMessages)
+		discordgo.IntentsGuildMessageReactions | discordgo.IntentsGuildMessages |
+		discordgo.IntentsGuilds | discordgo.IntentsGuildVoiceStates |
+		discordgo.IntentsGuildMembers | discordgo.IntentsGuildPresences)
 	s.AddHandler(HandleVerification)
 	s.AddHandler(HandleNewMember)
 	s.AddHandler(MessageReceived)
 	s.AddHandler(BlockUnwantedUpdatedMessages)
+	s.AddHandler(VoiceUpdate)
 }
 
 func RunBot(msgChannel chan *discordgo.MessageSend) {
@@ -138,5 +143,106 @@ func BlockUnwantedUpdatedMessages(s *discordgo.Session, data *discordgo.MessageU
 			fmt.Println("Failed to delete a malicious message,", err)
 		}
 		sendAuthorWarning(s, data.Author.ID)
+	}
+}
+
+func VoiceCountUsers(guild *discordgo.Guild, channel string) int {
+	connected := 0
+	for _, state := range guild.VoiceStates {
+		if state.ChannelID == channel {
+			connected++
+		}
+	}
+	return connected
+}
+
+func setUpOverwrite(userID string) []*discordgo.PermissionOverwrite {
+	var result []*discordgo.PermissionOverwrite
+	perm := discordgo.PermissionOverwrite{
+		ID:    userID,
+		Type:  discordgo.PermissionOverwriteTypeMember,
+		Allow: discordgo.PermissionVoiceMoveMembers | discordgo.PermissionVoiceMuteMembers |
+			discordgo.PermissionVoiceDeafenMembers,
+	}
+	result = append(result, &perm)
+	return result
+}
+
+func createNewChannel(s *discordgo.Session, data *discordgo.VoiceStateUpdate, database *sql.DB) {
+	// Get user nickname to be set as channel name
+	user, err := s.User(data.UserID)
+	if err != nil {
+		fmt.Println("Failed to retrieve user object creating the channel,", err)
+		return
+	}
+	fmt.Printf("Creating a channel for %s\n", user.Username)
+	channelData := discordgo.GuildChannelCreateData{
+		Name:     user.Username,
+		Type:     discordgo.ChannelTypeGuildVoice,
+		ParentID: config.Config.VoiceCategoryID,
+		PermissionOverwrites: setUpOverwrite(data.UserID),
+	}
+	channel, cerr := s.GuildChannelCreateComplex(data.GuildID, channelData)
+	if cerr != nil {
+		fmt.Println("Failed to set up a new voice channel,", err)
+		return
+	}
+	_, ierr := database.Exec(`INSERT INTO voice_channels(owner_id, channel_id) VALUES ($1, $2)`,
+		data.UserID, channel.ID)
+	if ierr != nil {
+		fmt.Println("Failed to insert a channel into database,", err)
+		return
+	}
+	err = s.GuildMemberMove(channel.GuildID, data.UserID, &channel.ID)
+	if err != nil {
+		fmt.Println("Failed to move a user to a channel,", err)
+	}
+
+}
+
+func isDynamicChannel(database *sql.DB, channelID string) bool {
+	rows, qerr := database.Query(`SELECT id FROM voice_channels WHERE channel_id = $1`, channelID)
+	if qerr != nil {
+		fmt.Println("Error when querying for a voice channel,", qerr)
+		return false
+	}
+	matching := 0
+	for rows.Next() {
+		matching++
+	}
+	return matching != 0
+}
+
+func removeChannel(s *discordgo.Session, data *discordgo.VoiceStateUpdate, database *sql.DB, guild *discordgo.Guild) {
+	// Channel leave, check the previous channel and remove it if it's unused
+	if isDynamicChannel(database, data.BeforeUpdate.ChannelID) &&
+		VoiceCountUsers(guild, data.BeforeUpdate.ChannelID) == 0 {
+		fmt.Printf("Deleting voice channel %s\n", data.BeforeUpdate.ChannelID)
+		// Dynamic channel left empty, delete it
+		_, err := s.ChannelDelete(data.BeforeUpdate.ChannelID)
+		if err != nil {
+			fmt.Println("Error when deleting a channel,", err)
+		}
+	}
+}
+
+
+func VoiceUpdate(s *discordgo.Session, data *discordgo.VoiceStateUpdate) {
+	database, err := db.Connect()
+	if err != nil {
+		fmt.Println("Failed to connect to the database,", err)
+		return
+	}
+	guild, err := s.Guild(data.GuildID)
+	if err != nil {
+		fmt.Println("Failed to obtain the guild object,", err)
+		return
+	}
+	if data.BeforeUpdate != nil && data.BeforeUpdate.ChannelID != "" {
+		removeChannel(s, data, database, guild)
+	}
+	if data.ChannelID == config.Config.MainVoiceID {
+		// Create a new channel
+		createNewChannel(s, data, database)
 	}
 }
