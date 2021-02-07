@@ -91,8 +91,10 @@ type config struct {
 	RestartCoolDown int `json:"restart_cool_down"`
 
 	// Voice-related
-	MainVoiceID     string `json:"main_voice_id"`
-	VoiceCategoryID string `json:"voice_category_id"`
+	MainVoiceID              string `json:"main_voice_id"`
+	VoiceCategoryID          string `json:"voice_category_id"`
+	NoChannelOwnedMessage    string `json:"no_channel_owned_message"`
+	LimitMustBeNumberMessage string `json:"limit_must_be_number_message"`
 }
 
 // Prepares RegExps for blocking malicious messages

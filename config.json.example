@@ -44,5 +44,7 @@
   ],
   "restart_cool_down": 10,
   "main_voice_id": "",
-  "voice_category_id": ""
+  "voice_category_id": "",
+  "no_channel_owned_message": "",
+  "limit_must_be_number_message": ""
 }

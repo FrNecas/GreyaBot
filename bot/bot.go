@@ -160,8 +160,8 @@ func VoiceCountUsers(guild *discordgo.Guild, channel string) int {
 func setUpOverwrite(userID string) []*discordgo.PermissionOverwrite {
 	var result []*discordgo.PermissionOverwrite
 	perm := discordgo.PermissionOverwrite{
-		ID:    userID,
-		Type:  discordgo.PermissionOverwriteTypeMember,
+		ID:   userID,
+		Type: discordgo.PermissionOverwriteTypeMember,
 		Allow: discordgo.PermissionVoiceMoveMembers | discordgo.PermissionVoiceMuteMembers |
 			discordgo.PermissionVoiceDeafenMembers,
 	}
@@ -178,9 +178,9 @@ func createNewChannel(s *discordgo.Session, data *discordgo.VoiceStateUpdate, da
 	}
 	fmt.Printf("Creating a channel for %s\n", user.Username)
 	channelData := discordgo.GuildChannelCreateData{
-		Name:     user.Username,
-		Type:     discordgo.ChannelTypeGuildVoice,
-		ParentID: config.Config.VoiceCategoryID,
+		Name:                 user.Username,
+		Type:                 discordgo.ChannelTypeGuildVoice,
+		ParentID:             config.Config.VoiceCategoryID,
 		PermissionOverwrites: setUpOverwrite(data.UserID),
 	}
 	channel, cerr := s.GuildChannelCreateComplex(data.GuildID, channelData)
@@ -251,7 +251,6 @@ func purgeDynamicChannels(s *discordgo.Session) {
 		fmt.Println("Error when connecting to database while pruning")
 		return
 	}
-	fmt.Println(channelUsage)
 	for channel, usages := range channelUsage {
 		if usages == 0 && isDynamicChannel(database, channel) {
 			fmt.Printf("Deleting voice channel %s\n", channel)
