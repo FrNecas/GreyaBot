@@ -14,6 +14,11 @@ services:
       - ./config.json:/config.json
     ports:
       -  "127.0.0.1:8080:8080"
+      - "40000:40000"
+    security_opt:
+      - "seccomp:unconfined"
+    cap_add:
+      - SYS_PTRACE
     depends_on:
       - db
 
