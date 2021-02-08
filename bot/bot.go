@@ -276,7 +276,7 @@ func VoiceUpdate(s *discordgo.Session, data *discordgo.VoiceStateUpdate) {
 		fmt.Println("Failed to connect to the database,", err)
 		return
 	}
-	guild, err := s.Guild(data.GuildID)
+	guild, err := s.State.Guild(data.GuildID)
 	if err != nil {
 		fmt.Println("Failed to obtain the guild object,", err)
 		return
